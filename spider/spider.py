@@ -1,4 +1,3 @@
-import re
 import sqlite3
 import ssl
 import urllib.request
@@ -31,23 +30,26 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-cur.execute('SELECT url FROM Pages WHERE error IS NULL LIMIT 1')
-start_url = cur.fetchone()
+cur.execute('SELECT id, url FROM Pages WHERE error IS NULL LIMIT 1')
 
-if start_url is not None:
-    print('Restarting existing crawl. Use spreset.py to start a fresh crawl.')
-    start_url = str(start_url[0])
-else:
+if cur.rowcount == -1:
     input_url = input('Enter wikipedia second-level domain ("en" by default): ') or 'en'
-    try:
-        urllib.request.urlopen('https://{}.wikipedia.org/'.format(input_url), context=ctx)
-        start_url = MAIN_URL = 'https://{}.wikipedia.org/'.format(input_url)
-    except:
+    if urllib.request.urlopen('https://{}.wikipedia.org/'.format(input_url), context=ctx).getcode() != 200:
         print('Incorrect domain format entered. Script shutdown..')
         exit()
+
+    from_id = 1
+    start_url = MAIN_URL = 'https://{}.wikipedia.org/'.format(input_url)
+
     cur.execute('INSERT OR IGNORE INTO Pages(url, error) VALUES (?, ?)', (start_url, 200))
     cur.execute('INSERT OR IGNORE INTO Webs(url) VALUES (?)', (start_url, ))
     conn.commit()
+else:
+    from_id, start_url = cur.fetchone()
+    print('Restarting existing crawl. Use spreset.py to start a fresh crawl.')
+    cur.execute('SELECT url FROM Pages WHERE id=1')
+    MAIN_URL = str(cur.fetchone()[0])
+
 
 cur.execute('SELECT url FROM Webs')
 webs = []
@@ -57,7 +59,6 @@ for url in cur.fetchall():
 print(webs)
 
 pages_count = int(input('How many pages? '))
-# pages_count = 1
 while (pages_count > 0) and (start_url is not None):
     html = urllib.request.urlopen(start_url, context=ctx).read().decode()
     soup = BeautifulSoup(html, 'html.parser')
@@ -65,20 +66,18 @@ while (pages_count > 0) and (start_url is not None):
     formatted_links = {MAIN_URL+link for link in raw_links if link.startswith('wiki/') and link.find(':') == -1}
 
     for link in formatted_links:
-        try:
-            urllib.request.urlopen(link, context=ctx)
-        except:
-            continue
+        if urllib.request.urlopen(link, context=ctx).getcode() != 200: continue
         cur.execute('INSERT OR IGNORE INTO Pages(url) VALUES (?)', (link,))
+        to_id = cur.lastrowid
         cur.execute('INSERT OR IGNORE INTO Webs(url) VALUES (?)', (link,))
+        cur.execute('INSERT OR IGNORE INTO Links(from_id, to_id) VALUES (?, ?)', (from_id, to_id))
         conn.commit()
 
     cur.execute('UPDATE Pages SET error = ? WHERE url = ?', (200, start_url,))
-    cur.execute('SELECT url FROM Pages WHERE error IS NULL LIMIT 1')
-    start_url = str(cur.fetchone()[0])
+    cur.execute('SELECT id, url FROM Pages WHERE error IS NULL LIMIT 1')
+    from_id, start_url = cur.fetchone()
     print('.')
     pages_count -= 1
 
 conn.commit()
 conn.close()
-
