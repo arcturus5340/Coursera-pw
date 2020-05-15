@@ -32,7 +32,7 @@ for node in rating:
 new_rating = {node: r/sum(new_rating.values()) for node, r in new_rating.items()}
 
 for node, r in new_rating.items():
-    cur.execute('UPDATE Pages SET new_rank = ? WHERE id = ?', (r, node))
+    cur.execute('UPDATE Pages SET rank = ? WHERE id = ?', (r, node))
 
 conn.commit()
 cur.close()
