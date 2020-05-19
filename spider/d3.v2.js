@@ -1,3 +1,5 @@
+// Copyright 2010-2017 Mike Bostock. All rights reserved.
+
 (function(){if (!Date.now) Date.now = function() {
   return +new Date;
 };
