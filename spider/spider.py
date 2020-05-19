@@ -20,10 +20,6 @@ cur.execute('''CREATE TABLE IF NOT EXISTS Links(
     UNIQUE(from_id, to_id) 
 )''')
 
-cur.execute('''CREATE TABLE IF NOT EXISTS Webs(
-    url TEXT UNIQUE 
-)''')
-
 conn.commit()
 
 ctx = ssl.create_default_context()
@@ -41,14 +37,10 @@ if not fetched:
 
     from_id = 1
     start_url = 'https://{}.wikipedia.org/wiki/Main_Page'.format(LANG)
-
-    cur.execute('INSERT OR IGNORE INTO Pages(url, error) VALUES (?, ?)', (start_url, 200))
-    cur.execute('INSERT OR IGNORE INTO Webs(url) VALUES (?)', (start_url, ))
-    conn.commit()
 else:
-    from_id, start_url = fetched
     print('Restarting existing crawl...')
-    LANG = re.findall('^https://(.+).wikipedia\.org.*', start_url)[0]
+    from_id, start_url = fetched
+    LANG = re.findall(r'^https://(.+).wikipedia\.org.*', start_url)[0]
 
 MAIN_URL = 'https://{}.wikipedia.org/'.format(LANG)
 
@@ -57,19 +49,25 @@ while (pages_count > 0) and (start_url is not None):
     html = urllib.request.urlopen(start_url, context=ctx).read().decode()
     soup = BeautifulSoup(html, 'html.parser')
     raw_links = {tag.get('href').strip('/') for tag in soup('a') if tag.get('href') is not None}
-    formatted_links = {MAIN_URL+link for link in raw_links if link.startswith('wiki/') and link.find(':') == -1}
+    filtered_links = {link for link in raw_links if link.startswith('wiki/') and link.find(':') == -1}
 
-    for link in formatted_links:
-        if urllib.request.urlopen(link, context=ctx).getcode() != 200: continue
-        cur.execute('SELECT id FROM Pages WHERE url = ?', (link,))
-        to_id = cur.fetchone()
-        if to_id and (from_id != int(to_id[0])):
-            cur.execute('INSERT OR IGNORE INTO Links(from_id, to_id) VALUES (?, ?)', (from_id, int(to_id[0])))
+    for link in filtered_links:
+        if link == 'wiki/Main_Page': continue
+        # if MAIN_URL + link == start_url: continue
+        try:
+            if urllib.request.urlopen(MAIN_URL + link, context=ctx).getcode() != 200: continue
+        except: continue
+
+        cur.execute('SELECT id FROM Pages WHERE url = ? LIMIT 1', (MAIN_URL + link,))
+        fetched_id = cur.fetchone()
+
+        if fetched_id:
+            to_id = int(fetched_id[0])
         else:
-            cur.execute('INSERT OR IGNORE INTO Pages(url) VALUES (?)', (link, ))
+            cur.execute('INSERT OR IGNORE INTO Pages(url) VALUES (?)', (MAIN_URL + link,))
             to_id = cur.lastrowid
-            cur.execute('INSERT OR IGNORE INTO Webs(url) VALUES (?)', (link,))
-            cur.execute('INSERT OR IGNORE INTO Links(from_id, to_id) VALUES (?, ?)', (from_id, to_id))
+
+        if from_id != to_id: cur.execute('INSERT OR IGNORE INTO Links(from_id, to_id) VALUES (?, ?)', (from_id, to_id))
         conn.commit()
 
     cur.execute('UPDATE Pages SET error = ? WHERE url = ?', (200, start_url,))
