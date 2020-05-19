@@ -10,8 +10,8 @@ var force = d3.layout.force()
     .linkDistance(dist)
     .size([width, height]);
 
-function getrank(rval) {
-    return rval*4000;
+function getrank(rval, count) {
+    return rval*count*16;
 }
 
 function getcolor(rval) {
@@ -63,7 +63,7 @@ var svg = d3.select("#chart").append("svg")
       .data(json.nodes)
       .enter().append("circle")
       .attr("class", "node")
-      .attr("r", function(d) { return getrank(d.rank); } )
+      .attr("r", function(d) { return getrank(d.rank, json.nodes.length); } )
       .style("fill", function(d) { return getcolor(d.rank); })
       .on("dblclick",function(d) {
             if ( confirm('Do you want to open '+d.url) )
