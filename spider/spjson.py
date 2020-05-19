@@ -1,5 +1,4 @@
 import sqlite3
-import random
 
 
 conn = sqlite3.connect('spider.sqlite')
@@ -13,10 +12,8 @@ if cur.fetchone()[0] != 0:
 cur.execute('SELECT COUNT(from_id) AS weight, rank, id, url FROM Pages JOIN Links ON id = from_id GROUP BY id')
 
 fhandle = open('spider.js', 'w')
-# print('spiderJSON = {"nodes":[', file=fhandle)
 print('spiderJson = {"nodes":[', file=fhandle)
 for row in cur:
-    row = (row[0], random.random(), row[2], row[3])
     print('{{"weight": {}, "rank": {}, "id": {}, "url": "{}"}},'.format(*row), file=fhandle)
 print('],', file=fhandle)
 
