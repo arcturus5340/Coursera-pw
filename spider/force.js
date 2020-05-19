@@ -3,7 +3,7 @@ var width = window.screen.width-20,
 
 var color = d3.scale.category20();
 
-var dist = (width + height) / 4;
+var dist = (width + height) / 8;
 
 var force = d3.layout.force()
     .charge(-120)
@@ -11,7 +11,7 @@ var force = d3.layout.force()
     .size([width, height]);
 
 function getrank(rval) {
-  return rval*10;
+    return rval*4000;
 }
 
 function getcolor(rval) {
@@ -44,6 +44,8 @@ var svg = d3.select("#chart").append("svg")
       .nodes(json.nodes)
       .links(filtred_links);
 
+    force.linkStrength(0.1);
+
     var k = Math.sqrt(json.nodes.length / (width * height));
 
     force
@@ -51,12 +53,11 @@ var svg = d3.select("#chart").append("svg")
         .gravity(100 * k)
         .start();
 
-
   var link = svg.selectAll("line.link")
       .data(filtred_links)
       .enter().append("line")
       .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+      .style("stroke-width", function(d) { return 0.1; });
 
   var node = svg.selectAll("circle.node")
       .data(json.nodes)
@@ -83,6 +84,5 @@ var svg = d3.select("#chart").append("svg")
     node.attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
   });
-
 }
 loadData(spiderJson);
