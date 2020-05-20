@@ -4,10 +4,10 @@ import sqlite3
 conn = sqlite3.connect('spider.sqlite')
 cur = conn.cursor()
 
-cur.execute('SELECT COUNT(*) FROM Pages')
+cur.execute('SELECT COUNT(*) FROM Pages WHERE error = 200')
 elem_count = cur.fetchone()[0]
 
-cur.execute('SELECT id, rank FROM Pages')
+cur.execute('SELECT id, rank FROM Pages WHERE error = 200')
 rating = dict()
 new_rating = dict()
 for id, rank in cur:
@@ -24,10 +24,7 @@ for from_id, to_id in cur:
 cycle_count = int(input('Enter the number of cycles to calculate ranks: '))
 for i in range(cycle_count):
     for node in rating:
-        incoming_edges = []
-        for link in links:
-            if node in links[link]: incoming_edges.append(link)
-
+        incoming_edges = [link for link in links if node in links[link]]
         r = (1-0.85)/elem_count + 0.85*sum(rating[edge]/len(links[edge]) for edge in incoming_edges)
         new_rating[node] = r
     rating = new_rating.copy()
