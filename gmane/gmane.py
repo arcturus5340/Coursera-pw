@@ -42,8 +42,8 @@ for i in range(start, start+count):
         dns = email[0]
         if dns not in dns_list:
             dns_list.append(dns)
-        id = dns_list.index(dns)
-        message_data['sender'] = id
+        server_id = dns_list.index(dns)
+        message_data['sender'] = server_id
 
     date = re.findall('\\nDate:\s(.*?)[\\n(]', html)[0]
     pdate = dateutil.parser.parse(date)
@@ -65,7 +65,7 @@ for i in range(start, start+count):
             cur.execute('INSERT INTO Messages(sender_id, sent_at, subject, body) '
                         'VALUES (?, ?, ?, ?)', (list(message.values())))
         conn.commit()
-        message_data_list= []
+        message_data_list = []
 
 for message in message_data_list:
     cur.execute('INSERT INTO Messages(sender_id, sent_at, subject, body) '
