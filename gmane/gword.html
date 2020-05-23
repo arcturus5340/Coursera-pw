@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="d3.v2.js"></script>
+<script src="d3.layout.cloud.js"></script>
+<script src="gword.js"></script>
+<body>
+<script>
+
+  // if (!String.prototype.format) {
+  //   String.prototype.format = function() {
+  //       var args = arguments;
+  //       return this.replace(/{(\d+)}/g, function(match, number) {
+  //         return typeof args[number] != 'undefined'
+  //           ? args[number]
+  //           : match;
+  //       });
+  //   };
+  // }
+  if (!String.format) {
+  String.format = function(format) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return format.replace(/{(\d+)}/g, function(match, number) {
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
+
+  var fill = d3.scale.category20();
+
+  d3.layout.cloud().size([window.screen.width, window.screen.height-100])
+      .words(gword)
+      .rotate(function() { return ~~(Math.random() * 2) * 90; })
+      .font("Impact")
+      .fontSize(function(d) { return d.size; })
+      .on("end", draw)
+      .start();
+
+  function draw(words) {
+    d3.select("body").append("svg")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .attr("viewBox", String.format("0 0 {0} {1}", window.screen.width, window.screen.height-100))
+        .attr("style", "display: inline-block; position: absolute; top: 0; left: 0;")
+
+      .append("g")
+        .attr("transform", String.format("translate({0}, {1})", window.screen.width/2, (window.screen.height-100)/2))
+      .selectAll("text")
+        .data(words)
+      .enter().append("text")
+        .style("font-size", function(d) { return d.size + "px"; })
+        .style("font-family", "Impact")
+        .style("fill", function(d, i) { return fill(i); })
+        .attr("text-anchor", "middle")
+        .attr("transform", function(d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+        })
+        .text(function(d) { return d.text; });
+  }
+</script>
