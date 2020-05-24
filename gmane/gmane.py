@@ -1,6 +1,7 @@
 import dateutil.parser
 import re
 import sqlite3
+import time
 import urllib.request
 
 
@@ -59,6 +60,9 @@ for i in range(start, start+count):
     message_data['body'] = body
 
     message_data_list.append(message_data)
+
+    if i % 10 == 0:
+        time.sleep(1)
 
     if i % 100 == 0:
         for message in message_data_list:
