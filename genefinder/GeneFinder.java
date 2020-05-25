@@ -16,6 +16,12 @@ public class GeneFinder {
         this.dna = file.getData();
     }
 
+    public static double cgRatio(String dnaFragment) {
+        long cCount = dnaFragment.chars().filter(ch -> ch == 'c').count();
+        long gCount = dnaFragment.chars().filter(ch -> ch == 'g').count();
+        return (double)(cCount + gCount) / dnaFragment.length();
+    }
+
     public List<String> getAllGenes() {
         List<String> geneStorage = new ArrayList<String>();
         String gene = this.getNextGene();
