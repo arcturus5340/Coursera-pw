@@ -22,6 +22,20 @@ public class GeneFinder {
         return (double)(cCount + gCount) / dnaFragment.length();
     }
 
+    public static double countCTG(String dnaFragment) {
+        int lastIndex = 0;
+        int count = 0;
+
+        while (lastIndex != -1) {
+            lastIndex = dnaFragment.indexOf("ctg", lastIndex);
+            if (lastIndex != -1) {
+                if (lastIndex % 3 == 0) { count++; }
+                lastIndex += 1;
+            }
+        }
+        return count;
+    }
+
     public List<String> getAllGenes() {
         List<String> geneStorage = new ArrayList<String>();
         String gene = this.getNextGene();
