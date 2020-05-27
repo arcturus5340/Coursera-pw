@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GeneFinder {
     private String dna;
@@ -80,5 +79,16 @@ public class GeneFinder {
         }
     }
 
+    public void processGenes(List<String> geneStorage) {
+        List<String> longGenes = geneStorage.stream().filter(gene -> gene.length() > 9).collect(Collectors.toList());
+        System.out.println("Gene that are longer than 9 characters: (" + longGenes.size() + ")");
+        System.out.println(longGenes);
+        List<String> highCGRatioGenes = geneStorage.stream().filter(gene -> GeneFinder.cgRatio(gene) > 0.35).collect(Collectors.toList());
+        System.out.println("Gene that C-G-Ratio is higher than 9 characters: (" + highCGRatioGenes.size() + ")");
+        System.out.println(highCGRatioGenes);
+        String longestGene = Collections.max(geneStorage, Comparator.comparing(String::length));
+        System.out.println("The longest Gene: (" + longestGene.length() + ")");
+        System.out.println(longestGene);
+    }
 }
 
